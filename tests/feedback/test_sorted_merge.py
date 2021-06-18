@@ -35,6 +35,9 @@ def test_sorted_merge():
         on_completed=lambda: actual_completed.append(True),
     )
 
+    on_back = actual_result[0]
+    actual_result.clear()
+
     source.on_next(rxx.Update())
     source.on_next(s1)
     source.on_next(s2)    
@@ -50,21 +53,26 @@ def test_sorted_merge():
     assert s2_feedback == [1]
     assert s3_feedback == [1]
 
-    s1.on_next(1)
+    s1.on_next(1) 
     assert actual_result == []
 
     s2.on_next(2)
     assert actual_result == []
 
     s3.on_next(3)
+    assert actual_result == []
+
+    on_back(1)
     assert actual_result == [1]
     assert s1_feedback == [1, 1]
 
     s1.on_next(1)
+    on_back(1)
     assert actual_result == [1, 1]
     assert s1_feedback == [1, 1, 1]
 
     s1.on_next(6)
+    on_back(1)
     assert actual_result == [1, 1, 2]
     assert s2_feedback == [1, 1]
 
@@ -73,6 +81,9 @@ def test_sorted_merge():
     s2.on_completed()
     assert actual_result == [1, 1, 2]
     s3.on_completed()
+
+    on_back(1)
+    on_back(1)
     assert actual_result == [1, 1, 2, 3, 6]
     assert actual_completed == [True]
 
@@ -94,13 +105,13 @@ def test_sorted_merge_lookup_3():
 
     source = rx.from_([rxx.Update(), s1, s2, s3, rxx.Updated()])
 
-    def on_error(e):
-        raise e
+    def on_error(e): raise e
 
     actual_result = []
     actual_completed = []
     source.pipe(
-        rxx.feedback.sorted_merge(key_mapper=lambda i:i, lookup_size=3)
+        rxx.feedback.sorted_merge(key_mapper=lambda i:i, lookup_size=3),
+        rxx.feedback.push(),
     ).subscribe(
         on_next=actual_result.append,
         on_error=on_error,
@@ -110,3 +121,37 @@ def test_sorted_merge_lookup_3():
     time.sleep(.5)
     assert actual_completed == [True]
     assert actual_result == [1, 2, 3, 3, 3, 4, 8, 10, 12, 9, 9, 10, 15, 18, 10, 11, 12, 22, 25, 26, 40, 40, 40, 42]
+
+
+def test_sorted_merge_long_sequence():
+    s1 = rx.from_(range(1000)).pipe(
+        ops.subscribe_on(NewThreadScheduler()),
+        rxx.feedback.pull(),
+    )
+    s2 = rx.from_(range(1000)).pipe(
+        ops.subscribe_on(NewThreadScheduler()),
+        rxx.feedback.pull(),
+    )
+    s3 = rx.from_(range(1000)).pipe(
+        ops.subscribe_on(NewThreadScheduler()),
+        rxx.feedback.pull(),
+    )
+
+    source = rx.from_([rxx.Update(), s1, s2, s3, rxx.Updated()])
+
+    def on_error(e): raise e
+
+    actual_result = []
+    actual_completed = []
+    source.pipe(
+        rxx.feedback.sorted_merge(key_mapper=lambda i:i, lookup_size=3),
+        rxx.feedback.push(),
+    ).subscribe(
+        on_next=actual_result.append,
+        on_error=on_error,
+        on_completed=lambda: actual_completed.append(True),
+    )
+
+    time.sleep(.5)
+    assert actual_completed == [True]
+    assert len(actual_result) == 3000
