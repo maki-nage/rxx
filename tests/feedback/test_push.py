@@ -10,9 +10,9 @@ def test_push():
     actual_completed = []
 
     def on_back(i): actual_back.append(i)
-    def on_error(e): raise e    
+    def on_error(e): raise e
 
-    source.pipe(rxx.feedback.push()).subscribe(
+    source.pipe(rxx.pullable.push()).subscribe(
         on_next=actual_result.append,
         on_error=on_error,
         on_completed=lambda: actual_completed.append(True),

@@ -6,6 +6,7 @@ from rx.scheduler import NewThreadScheduler
 
 import rxx
 
+
 def test_pull():
     source = [1, 2, 3, 4, 5, 6, 7, 8]
 
@@ -15,7 +16,7 @@ def test_pull():
 
     rx.from_(source).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull()
+        rxx.pullable.pull()
     ).subscribe(
         on_next=actual_result.append,
         on_error=actual_error.append,

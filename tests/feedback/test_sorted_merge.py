@@ -5,6 +5,7 @@ from rx.scheduler import NewThreadScheduler
 from rx.subject import Subject
 import rxx
 
+
 def test_sorted_merge():
     s1 = Subject()
     s2 = Subject()
@@ -28,7 +29,7 @@ def test_sorted_merge():
         raise e
 
     source.pipe(
-        rxx.feedback.sorted_merge(key_mapper=lambda i:i, lookup_size=lookup_size)
+        rxx.pullable.sorted_merge(key_mapper=lambda i:i, lookup_size=lookup_size)
     ).subscribe(
         on_next=actual_result.append,
         on_error=on_error,
@@ -91,15 +92,15 @@ def test_sorted_merge():
 def test_sorted_merge_lookup_3():
     s1 = rx.from_([1, 3, 4, 8, 10, 12, 9, 40]).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull(),
+        rxx.pullable.pull(),
     )
     s2 = rx.from_([2, 3, 9, 10, 11, 12, 25, 40]).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull(),
+        rxx.pullable.pull(),
     )
     s3 = rx.from_([3, 15, 18, 10, 22, 26, 40, 42]).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull(),
+        rxx.pullable.pull(),
     )
 
 
@@ -110,8 +111,8 @@ def test_sorted_merge_lookup_3():
     actual_result = []
     actual_completed = []
     source.pipe(
-        rxx.feedback.sorted_merge(key_mapper=lambda i:i, lookup_size=3),
-        rxx.feedback.push(),
+        rxx.pullable.sorted_merge(key_mapper=lambda i:i, lookup_size=3),
+        rxx.pullable.push(),
     ).subscribe(
         on_next=actual_result.append,
         on_error=on_error,
@@ -126,26 +127,31 @@ def test_sorted_merge_lookup_3():
 def test_sorted_merge_long_sequence():
     s1 = rx.from_(range(1000)).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull(),
+        rxx.pullable.pull(),
     )
     s2 = rx.from_(range(1000)).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull(),
+        rxx.pullable.pull(),
     )
     s3 = rx.from_(range(1000)).pipe(
         ops.subscribe_on(NewThreadScheduler()),
-        rxx.feedback.pull(),
+        rxx.pullable.pull(),
     )
 
-    source = rx.from_([rxx.Update(), s1, s2, s3, rxx.Updated()])
+    source = rx.from_([
+        rxx.Update(),
+        s1, s2, s3,
+        rxx.Updated(),
+    ])
 
     def on_error(e): raise e
 
     actual_result = []
     actual_completed = []
     source.pipe(
-        rxx.feedback.sorted_merge(key_mapper=lambda i:i, lookup_size=3),
-        rxx.feedback.push(),
+        rxx.pullable.sorted_merge(key_mapper=lambda i:i, lookup_size=3),
+        rxx.pullable.push(),
+        #ops.subscribe_on(NewThreadScheduler()),
     ).subscribe(
         on_next=actual_result.append,
         on_error=on_error,

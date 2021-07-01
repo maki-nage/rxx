@@ -5,7 +5,7 @@ import rx
 def pull():
     """ Transforms an observable to a pull based observable
 
-    A pull based observable emits items only on request, via a feedback loop.
+    A pull based observable emits items only on request, via an upstream request path.
     The implemetation of the pull is done by blocking the source obeservable on
     the item emission.
 
@@ -17,12 +17,8 @@ def pull():
         [        pull()       ]
         ---0---1---2---3-4----|
 
-
-    Args:
-        feedback: An observable that emits numbers. Each number is a request to emit that count of items.
-
     Returns:
-        An Observable.
+        A pull based Observable.
 
     """
     def _pull(source):
