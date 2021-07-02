@@ -6,8 +6,8 @@ ReactiveX eXtensions
     :target: https://pypi.org/project/rxx/
     :alt: PyPI
 
-.. image:: https://github.com/maki-nage/rxx/workflows/Python%20package/badge.svg
-    :target: https://github.com/maki-nage/rxx/actions?query=workflow%3A%22Python+package%22
+.. image:: https://github.com/maki-nage/rxx/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/maki-nage/rxx/actions/workflows/ci.yml
     :alt: Github WorkFlows
 
 .. image:: https://coveralls.io/repos/github/maki-nage/rxx/badge.svg?branch=master
