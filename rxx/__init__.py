@@ -4,3 +4,4 @@ __version__ = '0.1.0'
 
 from .types import NamedObservable, Update, Updated
 from . import pullable
+from .observable.enforce_ordering import enforce_ordering
