@@ -6,7 +6,7 @@ def pull():
     """ Transforms an observable to a pull based observable
 
     A pull based observable emits items only on request, via an upstream request path.
-    The implemetation of the pull is done by blocking the source obeservable on
+    The implementation of the pull is done by blocking the source obeservable on
     the item emission.
 
     .. marble::
