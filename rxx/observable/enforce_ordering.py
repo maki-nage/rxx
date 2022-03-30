@@ -3,7 +3,7 @@ from collections import deque
 import functools
 import rx
 import rx.operators as ops
-from rx.scheduler import NewThreadScheduler
+from rx.scheduler import NewThreadScheduler, EventLoopScheduler
 
 import rxx
 from rx.disposable import Disposable
@@ -58,7 +58,9 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
     ]
     sources = [Source(s) for s in sources]
     startup = True
+    all_completed = False
     lock = threading.RLock()
+    emit_scheduler = EventLoopScheduler()
 
     def get_active_source():
         # do not process when some pulls are pending
@@ -71,7 +73,6 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
             return None
 
         # stop when all sources items have been processed
-        # todo use all_completed state
         if all([
                 len(s.buffer) == 0
                 and s.is_completed is True
@@ -111,8 +112,8 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
         if active_source.is_completed is False:
             active_source.on_back(lookup_size - source_len)
 
-    def process_reads():
-        if startup is True:
+    def process_reads(scheduler, state):
+        if startup is True and all_completed is False:
             return
 
         with lock:
@@ -127,6 +128,7 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
     def on_subscribe(index, observer, scheduler):
         nonlocal sources
         nonlocal startup
+        nonlocal all_completed
 
         sources[index].observer = observer
 
@@ -147,24 +149,27 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
                         source.closest_key = key
 
                     if startup is True:
-                        if all(len(s.buffer) == lookup_size for s in sources):
+                        if all([len(s.buffer) == lookup_size for s in sources]):
                             startup = False
                         else:
                             return
 
-                    process_reads()
+                    emit_scheduler.schedule(process_reads)
 
                 except Exception as e:
                     observer.on_error(e)
 
         def on_completed(source):
-            print("completed")
+            nonlocal all_completed
+
             with lock:
                 source.is_completed = True
+                if all([s.is_completed for s in sources]):
+                    all_completed = True
                 if len(source.buffer) == 0:
                     source.observer.on_completed()
                 else:
-                    process_reads()
+                    emit_scheduler.schedule(process_reads)
 
         def fill_all_buffers():
             for _index, s in enumerate(sources):
@@ -179,6 +184,7 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
                     on_next=functools.partial(on_next, source),
                     on_error=observer.on_error,
                     on_completed=functools.partial(on_completed, source),
+                    scheduler=scheduler,
                 )
 
             fill_all_buffers()
