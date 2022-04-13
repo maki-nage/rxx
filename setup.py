@@ -21,7 +21,7 @@ install_requires = [
 
 setup(
     name="rxx",
-    version='0.1.0',
+    version='0.2.0',
     url='https://github.com/maki-nage/rxx.git',
     license='MIT',
     description="ReactiveX extensions",
