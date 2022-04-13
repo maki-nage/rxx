@@ -14,8 +14,8 @@ ReactiveX eXtensions
     :target: https://coveralls.io/github/maki-nage/rxx?branch=master
     :alt: Code Coverage
 
-.. image:: https://github.com/maki-nage/rxx/raw/master/asset/apis_read.svg
-    :target: https://www.makinage.org/doc/rxx/latest/index.html
+.. image:: https://readthedocs.org/projects/rxx/badge/?version=latest
+    :target: https://rxx.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation
 
 
