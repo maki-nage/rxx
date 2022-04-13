@@ -43,8 +43,8 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
 
     Args:
         key_mapper: A function that maps the sorting key for each item
-        lookup_size: [Optional] The buffer size being used on each source to
-        look for the next item to emit.
+        lookup_size: [Optional] The buffer size being used on each source to \
+            look for the next item to emit.
 
     Returns:
         Push Observables emitting the same items than the sources observables.
