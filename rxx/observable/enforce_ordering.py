@@ -18,11 +18,12 @@ class Source(object):
         self.observer = None
         self.disposable = None
         self.is_completed = False
+        self.startup = False
 
     def __repr__(self):
-        return "{{closest_key: {}, is_completed: {}, buffer: {}}}".format(
+        return "{{closest_key: {}, is_completed: {}, startup: {}, buffer: {}}}".format(
             self.closest_key,
-            self.is_completed,
+            self.is_completed, self.startup,
             self.buffer,
         )
 
@@ -149,7 +150,9 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
                         source.closest_key = key
 
                     if startup is True:
-                        if all([len(s.buffer) == lookup_size for s in sources]):
+                        if len(source.buffer) == lookup_size:
+                            source.startup = False
+                        if all([s.startup == False for s in sources]):
                             startup = False
                         else:
                             return
@@ -161,9 +164,15 @@ def enforce_ordering(sources, key_mapper, lookup_size=1):
 
         def on_completed(source):
             nonlocal all_completed
+            nonlocal startup
 
             with lock:
                 source.is_completed = True
+
+                # clear startup state
+                source.startup = False
+                if all([s.startup == False for s in sources]):
+                    startup = False
                 if all([s.is_completed for s in sources]):
                     all_completed = True
                 if len(source.buffer) == 0:
